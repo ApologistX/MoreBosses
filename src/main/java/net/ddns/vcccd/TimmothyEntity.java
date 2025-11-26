@@ -4,50 +4,38 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Skeleton;
-import org.bukkit.inventory.EntityEquipment;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.entity.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
-public class TimmothyEntity {
-	
-	private ItemStack createEnchantedItem(Material armor, Enchantment enchant, int level) {
-        ItemStack returnArmor = new ItemStack(armor);
-        ItemMeta armorMeta = returnArmor.getItemMeta();
-        armorMeta.addEnchant(enchant, level, true);
-        returnArmor.setItemMeta(armorMeta);
-        return returnArmor;
-    }
-	
-	public TimmothyEntity(int health, Location local, World world, Main main) {
-		ItemStack bombBow = new ItemStack(Material.BOW);
-        ItemMeta bombBowMeta = bombBow.getItemMeta();
-        bombBowMeta.setDisplayName(ChatColor.RED + "BomBow");
-        bombBow.setItemMeta(bombBowMeta);
+class TimmothyEntity {
+    private ItemStack[] timmothyArmor = {
+            new ItemStack(Material.DIAMOND_BOOTS),
+            new ItemStack(Material.DIAMOND_LEGGINGS),
+            new ItemStack(Material.DIAMOND_CHESTPLATE),
+            new ItemStack(Material.DIAMOND_HELMET)
+    };
 
+    public TimmothyEntity(int health, Location local, World world, Main main) {
         Skeleton timmothy = (Skeleton) world.spawnEntity(local, EntityType.SKELETON);
-        EntityEquipment equipment = timmothy.getEquipment();
+        timmothy.getEquipment().setArmorContents(timmothyArmor);
 
-        // Read from config.yml (fallback to constructor parameter)
-        double configuredHealth = main.getConfig().getDouble("TimmothyHealth", health);
+        // Give Timmothy the BomBow so he uses it
+        ItemStack bomBow = new ItemStack(Material.BOW);
+        ItemMeta bowMeta = bomBow.getItemMeta();
+        bowMeta.setDisplayName(ChatColor.RED + "BomBow");
+        bomBow.setItemMeta(bowMeta);
+        timmothy.getEquipment().setItemInMainHand(bomBow);
 
-        // Older Spigot API style
-        timmothy.setMaxHealth(configuredHealth);
-        timmothy.setHealth(configuredHealth);
-        
-        ItemStack[] skeletonArmor = {
-        		createEnchantedItem(Material.DIAMOND_BOOTS, Enchantment.BLAST_PROTECTION, 5),
-                createEnchantedItem(Material.DIAMOND_LEGGINGS, Enchantment.BLAST_PROTECTION, 5),
-                createEnchantedItem(Material.DIAMOND_CHESTPLATE, Enchantment.BLAST_PROTECTION, 5),
-                createEnchantedItem(Material.DIAMOND_HELMET, Enchantment.BLAST_PROTECTION, 5)
-        };
-        
-        equipment.setArmorContents(skeletonArmor);
-        equipment.setItemInMainHand(bombBow);
         timmothy.setCustomName(ChatColor.AQUA + "Timmothy");
-        timmothy.setRemoveWhenFarAway(main.getConfig().getBoolean("TimmothyDeSpawn"));
-	}
+        timmothy.setCustomNameVisible(true);
 
+        timmothy.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 99999999, 2));
+        timmothy.getAttribute(Attribute.MAX_HEALTH).setBaseValue(health);
+        timmothy.setHealth(health);
+        timmothy.setRemoveWhenFarAway(main.getConfig().getBoolean("TimmothyDeSpawn"));
+    }
 }

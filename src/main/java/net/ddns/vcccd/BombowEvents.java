@@ -6,6 +6,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -45,7 +46,7 @@ public class BombowEvents implements Listener {
         try {
             Projectile explosiveArrow = event.getEntity();
             if (explosiveArrow.getCustomName() == null ||
-                !explosiveArrow.getCustomName().equals("Exploding Arrow")) {
+                    !explosiveArrow.getCustomName().equals("Exploding Arrow")) {
                 return; // Not a BomBow arrow
             }
 
@@ -55,6 +56,19 @@ public class BombowEvents implements Listener {
             FileConfiguration config = plugin.getConfig();
             boolean grief = config.getBoolean("bombowexplosion.grief", true);
             float power = (float) config.getDouble("bombowexplosion.power", 4.0);
+
+            // Protect nearby items from explosion damage
+            world.getNearbyEntities(whereLanded, 10, 10, 10).forEach(entity -> {
+                if (entity instanceof Item) {
+                    ((Item) entity).setInvulnerable(true);
+                    // Make them vulnerable again after explosion
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                        if (entity.isValid()) {
+                            ((Item) entity).setInvulnerable(false);
+                        }
+                    }, 2L);
+                }
+            });
 
             if (!grief) {
                 // Place temporary water to absorb explosion

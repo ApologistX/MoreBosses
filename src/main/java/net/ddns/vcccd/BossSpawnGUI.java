@@ -15,14 +15,14 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 public class BossSpawnGUI implements CommandExecutor {
 
-    private Inventory bossMenu = Bukkit.createInventory(null, 18, "Spawn Boss");
-    
+    private Inventory bossMenu = Bukkit.createInventory(null, 27, "Spawn Boss");
+
     private void itemLore(ArrayList<String> Lore, ItemStack item) {
-    	ItemMeta temp = item.getItemMeta();
-    	temp.setLore(Lore);
-    	item.setItemMeta(temp);
+        ItemMeta temp = item.getItemMeta();
+        temp.setLore(Lore);
+        item.setItemMeta(temp);
     }
-    
+
     private ItemStack createHead(String name, Material headMaterial) {
         ItemStack returnHead = new ItemStack(headMaterial);
         ItemMeta returnHeadMeta = returnHead.getItemMeta();
@@ -30,7 +30,7 @@ public class BossSpawnGUI implements CommandExecutor {
         returnHead.setItemMeta(returnHeadMeta);
         return returnHead;
     }
-    
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         ItemStack albertHead, oswaldoHead, bigBoyHead, timmothyHead, bartholomewHead, piggyHead, vinHead, strangeHead;
@@ -42,7 +42,7 @@ public class BossSpawnGUI implements CommandExecutor {
         piggyHead = createHead(ChatColor.translateAlternateColorCodes('&', "&4&ki&c&lPiggy&4&ki"), Material.PIG_SPAWN_EGG);
         vinHead = createHead(ChatColor.translateAlternateColorCodes('&', "&4&ki&c&lGort&4&ki"), Material.VINDICATOR_SPAWN_EGG);
         strangeHead = createHead(ChatColor.translateAlternateColorCodes('&', "&4&ki&c&lDr. Strange&4&ki"), Material.ENDER_PEARL);
-        
+
         // Define lore for each head
         ArrayList<String> albertLore = new ArrayList<>();
         albertLore.add(ChatColor.WHITE + "Never-ending slime that");
@@ -63,15 +63,15 @@ public class BossSpawnGUI implements CommandExecutor {
         ArrayList<String> bigBoyLore = new ArrayList<>();
         bigBoyLore.add(ChatColor.WHITE + "Big boy that likes");
         bigBoyLore.add(ChatColor.WHITE + "spawning bigger minions...");
-        
+
         ArrayList<String> piggyLore = new ArrayList<>();
         piggyLore.add(ChatColor.WHITE + "Big bad piggy");
         piggyLore.add(ChatColor.WHITE + "Will throw you around...");
-        
+
         ArrayList<String> vinLore = new ArrayList<>();
         vinLore.add(ChatColor.WHITE + "Rude serf who no longer");
         vinLore.add(ChatColor.WHITE + "Puts up with his lord...");
-        
+
         ArrayList<String> strangeLore = new ArrayList<>();
         strangeLore.add(ChatColor.WHITE + "An Enderman");
         strangeLore.add(ChatColor.WHITE + "Who mastered space travel...");
@@ -93,18 +93,18 @@ public class BossSpawnGUI implements CommandExecutor {
             accumulator += 2;
         }
         accumulator = 1;
-        
+
         ItemStack blank = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
         ItemMeta a = blank.getItemMeta();
         a.setDisplayName(ChatColor.BLACK + ".");
         blank.setItemMeta(a);
-        
+
         for(int i = 0; i < 4; i++) {
-        	bossMenu.setItem(accumulator, blank);
-        	accumulator = accumulator + 2;
+            bossMenu.setItem(accumulator, blank);
+            accumulator = accumulator + 2;
         }
-        
-        
+
+
         // TODO: Make into loop
         bossMenu.setItem(10, piggyHead);
         bossMenu.setItem(13, vinHead);
@@ -115,7 +115,34 @@ public class BossSpawnGUI implements CommandExecutor {
         bossMenu.setItem(14, blank);
         bossMenu.setItem(15, blank);
         bossMenu.setItem(17, blank);
-        
+
+        // New buttons for custom boss creation and management
+        ItemStack createBossButton = new ItemStack(Material.WRITABLE_BOOK);
+        ItemMeta createBossMeta = createBossButton.getItemMeta();
+        createBossMeta.setDisplayName(ChatColor.GREEN + "Create Custom Boss");
+        ArrayList<String> createBossLore = new ArrayList<>();
+        createBossLore.add(ChatColor.WHITE + "Click to open the");
+        createBossLore.add(ChatColor.WHITE + "custom boss creator");
+        createBossMeta.setLore(createBossLore);
+        createBossButton.setItemMeta(createBossMeta);
+
+        ItemStack manageBossButton = new ItemStack(Material.CHEST);
+        ItemMeta manageBossMeta = manageBossButton.getItemMeta();
+        manageBossMeta.setDisplayName(ChatColor.GOLD + "Manage Custom Bosses");
+        ArrayList<String> manageBossLore = new ArrayList<>();
+        manageBossLore.add(ChatColor.WHITE + "Click to view and spawn");
+        manageBossLore.add(ChatColor.WHITE + "your custom bosses");
+        manageBossMeta.setLore(manageBossLore);
+        manageBossButton.setItemMeta(manageBossMeta);
+
+        bossMenu.setItem(18, createBossButton);
+        bossMenu.setItem(26, manageBossButton);
+
+        // Fill remaining bottom slots with blank panes
+        for(int i = 19; i < 26; i++) {
+            bossMenu.setItem(i, blank);
+        }
+
         if (sender instanceof Player) {
             Player player = (Player) sender;
             player.openInventory(bossMenu);
