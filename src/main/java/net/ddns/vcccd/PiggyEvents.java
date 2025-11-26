@@ -8,7 +8,7 @@ import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.entity.ExperienceOrb;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.PigZombie;
+import org.bukkit.entity.PiglinBrute;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -22,11 +22,10 @@ public class PiggyEvents implements Listener {
     private ArrayList<Player> PiggyPlayers = new ArrayList<>();
     private final Main main;
 
-    public PiggyEvents(Main main) { 
-        this.main = main; 
+    public PiggyEvents(Main main) {
+        this.main = main;
     }
 
-    // 
     private ItemStack CustomItem(Material item, String name) {
         ItemStack ReturnItem = new ItemStack(item);
         ItemMeta ReturnItemData = ReturnItem.getItemMeta();
@@ -62,20 +61,18 @@ public class PiggyEvents implements Listener {
         }
     }
 
-    // Make Piggy aggressive if a player comes close
     @EventHandler
     public void onPlayerNearPiggy(PlayerMoveEvent event) {
         Player player = event.getPlayer();
         for (LivingEntity entity : player.getNearbyEntities(10, 10, 10).stream()
-                .filter(e -> e instanceof PigZombie)
+                .filter(e -> e instanceof PiglinBrute)
                 .map(e -> (LivingEntity) e)
                 .toList()) {
 
             if (entity.getCustomName() != null &&
-                entity.getCustomName().equals(ChatColor.translateAlternateColorCodes('&', "&c&lPiGgY"))) {
+                    entity.getCustomName().equals(ChatColor.translateAlternateColorCodes('&', "&c&lPiGgY"))) {
 
-                PigZombie piggy = (PigZombie) entity;
-                piggy.setAngry(true);
+                PiglinBrute piggy = (PiglinBrute) entity;
                 piggy.setTarget(player);
             }
         }
@@ -84,16 +81,13 @@ public class PiggyEvents implements Listener {
     @EventHandler
     public void onPiggyDeath(EntityDeathEvent event) {
         try {
-            if (!(event.getEntity() instanceof PigZombie)) return;
+            if (!(event.getEntity() instanceof PiglinBrute)) return;
 
-            PigZombie piggy = (PigZombie) event.getEntity();
+            PiglinBrute piggy = (PiglinBrute) event.getEntity();
             boolean isPiggy = piggy.getCustomName() != null &&
-                piggy.getCustomName().equals(ChatColor.translateAlternateColorCodes('&', "&c&lPiGgY"));
+                    piggy.getCustomName().equals(ChatColor.translateAlternateColorCodes('&', "&c&lPiGgY"));
 
             if (isPiggy) {
-                DropItemAt(event.getEntity(), 
-                    CustomItem(Material.GOLDEN_AXE, 
-                        ChatColor.translateAlternateColorCodes('&', "&c&lPiggy&4&lAxe")));
                 spawnExperienceOrbs(event.getEntity().getLocation(), 100, 2);
 
                 if (main.getConfig().getBoolean("AnnounceBossKill")) {
@@ -105,7 +99,7 @@ public class PiggyEvents implements Listener {
             }
 
         } catch (Exception e) {
-            // 
+            // ignore
         }
     }
 }
