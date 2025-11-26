@@ -128,12 +128,14 @@ public class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new BartholomewListener(this), this);
         getServer().getPluginManager().registerEvents(new LeveSwordEvent(), this);
         getServer().getPluginManager().registerEvents(new PiggyEvents(this), this);
-        getServer().getPluginManager().registerEvents(new PiggyAxeEvents(), this);
+        getServer().getPluginManager().registerEvents(new PiggyAxeEvents(this), this);
         getServer().getPluginManager().registerEvents(new GortEvents(this), this);
         getServer().getPluginManager().registerEvents(new GortsHoeEvents(), this);
         getServer().getPluginManager().registerEvents(new DrStrangeEvents(this), this);
         getServer().getPluginManager().registerEvents(new SpawnInWorld(this), this);
         getServer().getPluginManager().registerEvents(new UpdateChecker(this), this);
+        getServer().getPluginManager().registerEvents(new CustomBossCreatorEvents(this), this);
+        getServer().getPluginManager().registerEvents(new PassiveBossHandler(this), this);
 
         // Use the single instance for the event listener
         getServer().getPluginManager().registerEvents(bossBarHandler, this);
