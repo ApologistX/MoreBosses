@@ -9,7 +9,7 @@ Still need to test all angles of custom items. This fork is going in the directi
 
 ###  Core Systems
 - [✕] Implement Spell Effects
-- [✕] Implement Special Attacks
+- [75% Done] Implement Special Attacks
 - [✕] Implement Structures
 - [✕] Update legacy strings for bosses / boss handling
 - [✕] Create new schematics for custom bosses
