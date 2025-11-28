@@ -1,63 +1,95 @@
 package net.ddns.vcccd;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.EntityType;
-import org.bukkit.entity.PiglinBrute;
+import org.bukkit.entity.PigZombie;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class PiggyEntity {
 
-    private ItemStack PiggySword = new ItemStack(Material.GOLDEN_AXE);
-    private List<String> PiggyLore = new ArrayList<String>();
-
-    private ItemStack[] apperal = {
-            new ItemStack(Material.NETHERITE_BOOTS),
-            new ItemStack(Material.NETHERITE_LEGGINGS),
-            new ItemStack(Material.NETHERITE_CHESTPLATE),
-            new ItemStack(Material.NETHERITE_HELMET)
-    };
+    private static final String PIGGY_NAME =
+            ChatColor.translateAlternateColorCodes('&', "&c&lPiGgY");
+    private static final String PIGGY_AXE_NAME =
+            ChatColor.translateAlternateColorCodes('&', "&c&lPiggy&4&lAxe");
+    private static final String PIGGY_AXE_LORE =
+            ChatColor.translateAlternateColorCodes('&', "&cThe power of the piggy");
 
     public PiggyEntity(int health, Location location, World world, Main main) {
-        // Use PiglinBrute instead of deprecated PigZombie
-        PiglinBrute OurPiggy = (PiglinBrute) world.spawnEntity(location, EntityType.PIGLIN_BRUTE);
 
-        OurPiggy.getAttribute(Attribute.MAX_HEALTH).setBaseValue(health);
-        OurPiggy.setHealth(health);
+        // === Spawn main Piggy entity
+        PigZombie piggy = (PigZombie) world.spawnEntity(location, EntityType.ZOMBIFIED_PIGLIN);
 
-        ItemMeta PiggySwordMeta = PiggySword.getItemMeta();
-        PiggySwordMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&c&lPiggy&4&lAxe"));
-        this.PiggyLore.add(ChatColor.translateAlternateColorCodes('&', "&cThe power of the piggy"));
-        PiggySwordMeta.setLore(PiggyLore);
-        this.PiggySword.setItemMeta(PiggySwordMeta);
+        piggy.getAttribute(Attribute.MAX_HEALTH).setBaseValue(health);
+        piggy.setHealth(health);
 
-        EntityEquipment equipment = OurPiggy.getEquipment();
-        if (equipment != null) {
-            equipment.setBoots(apperal[0]);
-            equipment.setLeggings(apperal[1]);
-            equipment.setChestplate(apperal[2]);
-            equipment.setHelmet(apperal[3]);
+        piggy.setAnger(Integer.MAX_VALUE);
+        piggy.setAngry(true);
+        piggy.setTarget(null);
 
-            equipment.setItemInMainHand(PiggySword);
+        piggy.setBaby(false);
+        piggy.setAdult();
+        piggy.setAgeLock(true);
 
-            equipment.setItemInMainHandDropChance(1.0f); // 100% chance to drop the axe
-            equipment.setHelmetDropChance(0.0f); // Don't drop armor
-            equipment.setChestplateDropChance(0.0f);
-            equipment.setLeggingsDropChance(0.0f);
-            equipment.setBootsDropChance(0.0f);
-        }
+        piggy.setCustomName(PIGGY_NAME);
+        piggy.setCustomNameVisible(true);
+        piggy.setRemoveWhenFarAway(main.getConfig().getBoolean("PiggyDeSpawn"));
 
-        OurPiggy.setCustomName(ChatColor.translateAlternateColorCodes('&', "&c&lPiGgY"));
-        OurPiggy.setCustomNameVisible(true);
+        // Remove stray baby piglins spawned with him
+        world.getNearbyEntities(location, 1.5, 1.5, 1.5).forEach(entity -> {
+            if (entity instanceof PigZombie other && other != piggy && other.isBaby()) {
+                other.remove();
+            }
+        });
 
-        OurPiggy.setRemoveWhenFarAway(main.getConfig().getBoolean("PiggyDeSpawn"));
+        // === Equipment ===
+        equipPiggy(piggy);
+    }
+
+    private void equipPiggy(PigZombie piggy) {
+        EntityEquipment equipment = piggy.getEquipment();
+        if (equipment == null) return;
+
+        ItemStack boots = new ItemStack(Material.DIAMOND_BOOTS);
+        ItemStack leggings = new ItemStack(Material.DIAMOND_LEGGINGS);
+        ItemStack chestplate = new ItemStack(Material.DIAMOND_CHESTPLATE);
+        ItemStack axe = createPiggyAxe();
+
+        equipment.setBoots(boots);
+        equipment.setLeggings(leggings);
+        equipment.setChestplate(chestplate);
+        equipment.setItemInMainHand(axe);
+
+        equipment.setItemInMainHandDropChance(0f);
+        equipment.setBootsDropChance(0f);
+        equipment.setLeggingsDropChance(0f);
+        equipment.setChestplateDropChance(0f);
+    }
+
+    private ItemStack createPiggyAxe() {
+        ItemStack axe = new ItemStack(Material.GOLDEN_AXE);
+        ItemMeta meta = axe.getItemMeta();
+        if (meta == null) return axe;
+
+        meta.setDisplayName(PIGGY_AXE_NAME);
+
+        List<String> lore = new ArrayList<>();
+        lore.add(PIGGY_AXE_LORE);
+        meta.setLore(lore);
+
+        if (meta instanceof Damageable dmg) dmg.setDamage(0);
+        meta.setUnbreakable(true);
+
+        axe.setItemMeta(meta);
+        return axe;
     }
 }
