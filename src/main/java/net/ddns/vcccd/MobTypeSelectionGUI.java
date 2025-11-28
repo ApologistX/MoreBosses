@@ -163,6 +163,8 @@ class SpecialAttacksSelectionGUI {
         Inventory gui = Bukkit.createInventory(null, 54, "Select Special Attacks");
 
         int slot = 0;
+
+        // Add preset attacks from BossSpecialAttacks
         for (String attackId : BossSpecialAttacks.getAllAttacks().keySet()) {
             ItemStack attackItem = BossSpecialAttacks.createAttackMenuItem(attackId);
             if (attackItem != null && slot < 45) {
@@ -170,6 +172,17 @@ class SpecialAttacksSelectionGUI {
                 slot++;
             }
         }
+
+        // Add custom attacks from CustomAttackManager
+        for (String attackId : CustomAttackManager.getCustomAttacks().keySet()) {
+            CustomAttackManager.CustomAttack customAttack = CustomAttackManager.getCustomAttack(attackId);
+            ItemStack attackItem = CustomAttackManager.createAttackItem(customAttack);
+            if (attackItem != null && slot < 45) {
+                gui.setItem(slot, attackItem);
+                slot++;
+            }
+        }
+
 
         // Back button
         ItemStack back = new ItemStack(Material.ARROW);

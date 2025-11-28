@@ -8,11 +8,11 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Slime;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,8 +22,7 @@ import java.util.List;
 public class CustomBossManagerGUI {
 
     private final Main main;
-    private static File bossesFile;
-    private static FileConfiguration bossesConfig;
+    private static File customBossesFolder;
 
     public CustomBossManagerGUI(Main main) {
         this.main = main;
@@ -31,20 +30,18 @@ public class CustomBossManagerGUI {
     }
 
     /**
-     * Initialize the custom bosses storage file
+     * Initialize the Custom Bosses folder structure
      */
     private void initializeBossStorage() {
-        if (bossesFile == null) {
-            bossesFile = new File(main.getDataFolder(), "custom_bosses.yml");
-            if (!bossesFile.exists()) {
-                try {
-                    bossesFile.createNewFile();
-                } catch (IOException e) {
-                    main.getConsole().sendMessage(main.getPluginPrefix() + ChatColor.RED + "Could not create custom_bosses.yml!");
-                    e.printStackTrace();
+        if (customBossesFolder == null) {
+            customBossesFolder = new File(main.getDataFolder(), "Custom Bosses");
+            if (!customBossesFolder.exists()) {
+                if (customBossesFolder.mkdirs()) {
+                    main.getConsole().sendMessage(main.getPluginPrefix() + ChatColor.GREEN + "Created Custom Bosses folder!");
+                } else {
+                    main.getConsole().sendMessage(main.getPluginPrefix() + ChatColor.RED + "Failed to create Custom Bosses folder!");
                 }
             }
-            bossesConfig = YamlConfiguration.loadConfiguration(bossesFile);
         }
     }
 
@@ -52,10 +49,8 @@ public class CustomBossManagerGUI {
      * Open the main manager GUI showing all saved bosses
      */
     public void openManagerGUI(Player player) {
-        reloadBossConfig();
-
-        ConfigurationSection bosses = bossesConfig.getConfigurationSection("bosses");
-        int bossCount = (bosses != null) ? bosses.getKeys(false).size() : 0;
+        File[] bossFiles = customBossesFolder.listFiles((dir, name) -> name.endsWith(".yml"));
+        int bossCount = (bossFiles != null) ? bossFiles.length : 0;
 
         // Calculate inventory size (minimum 27, maximum 54)
         int invSize = Math.min(54, Math.max(27, ((bossCount / 9) + 1) * 9));
@@ -64,16 +59,14 @@ public class CustomBossManagerGUI {
 
         // Add all saved bosses
         int slot = 0;
-        if (bosses != null) {
-            for (String bossKey : bosses.getKeys(false)) {
+        if (bossFiles != null) {
+            for (File bossFile : bossFiles) {
                 if (slot >= 45) break; // Leave room for buttons at bottom
 
-                ConfigurationSection bossSection = bosses.getConfigurationSection(bossKey);
-                if (bossSection != null) {
-                    ItemStack bossItem = createBossMenuItem(bossSection);
-                    managerMenu.setItem(slot, bossItem);
-                    slot++;
-                }
+                FileConfiguration bossConfig = YamlConfiguration.loadConfiguration(bossFile);
+                ItemStack bossItem = createBossMenuItem(bossConfig, bossFile.getName().replace(".yml", ""));
+                managerMenu.setItem(slot, bossItem);
+                slot++;
             }
         }
 
@@ -174,10 +167,11 @@ public class CustomBossManagerGUI {
     /**
      * Create a menu item representing a boss
      */
-    private ItemStack createBossMenuItem(ConfigurationSection bossSection) {
-        String displayName = bossSection.getString("name", "Unknown Boss");
-        EntityType type = EntityType.valueOf(bossSection.getString("type", "ZOMBIE"));
-        double health = bossSection.getDouble("health", 100.0);
+    private ItemStack createBossMenuItem(FileConfiguration bossConfig, String fileName) {
+        String displayName = bossConfig.getString("name", "Unknown Boss");
+        EntityType type = EntityType.valueOf(bossConfig.getString("type", "ZOMBIE"));
+        double health = bossConfig.getDouble("health", 100.0);
+        List<String> specialAttacks = bossConfig.getStringList("specialAttacks");
 
         // Use appropriate icon based on mob type
         Material icon = getIconForEntityType(type);
@@ -189,6 +183,7 @@ public class CustomBossManagerGUI {
         ArrayList<String> lore = new ArrayList<>();
         lore.add(ChatColor.GRAY + "Type: " + ChatColor.WHITE + type.name());
         lore.add(ChatColor.GRAY + "Health: " + ChatColor.WHITE + health);
+        lore.add(ChatColor.GRAY + "Special Attacks: " + ChatColor.WHITE + specialAttacks.size());
         lore.add("");
         lore.add(ChatColor.YELLOW + "Left Click: " + ChatColor.WHITE + "Spawn");
         lore.add(ChatColor.YELLOW + "Right Click: " + ChatColor.WHITE + "Edit");
@@ -200,78 +195,100 @@ public class CustomBossManagerGUI {
     }
 
     /**
-     * Get an appropriate icon material for an entity type
+     * Get an appropriate icon for an entity type
      */
     private Material getIconForEntityType(EntityType type) {
         switch (type) {
-            case ZOMBIE: return Material.ZOMBIE_HEAD;
-            case SKELETON: return Material.SKELETON_SKULL;
-            case CREEPER: return Material.CREEPER_HEAD;
-            case WITHER_SKELETON: return Material.WITHER_SKELETON_SKULL;
-            case SLIME: return Material.SLIME_BLOCK;
-            case MAGMA_CUBE: return Material.MAGMA_BLOCK;
-            case BLAZE: return Material.BLAZE_ROD;
-            case ENDERMAN: return Material.ENDER_PEARL;
-            case SPIDER: return Material.SPIDER_EYE;
-            case IRON_GOLEM: return Material.IRON_BLOCK;
-            default: return Material.SPAWNER;
+            case ZOMBIE:
+            case ZOMBIE_VILLAGER:
+            case HUSK:
+            case DROWNED:
+                return Material.ZOMBIE_HEAD;
+            case SKELETON:
+            case STRAY:
+            case WITHER_SKELETON:
+                return Material.SKELETON_SKULL;
+            case CREEPER:
+                return Material.CREEPER_HEAD;
+            case ENDERMAN:
+                return Material.ENDER_PEARL;
+            case BLAZE:
+                return Material.BLAZE_ROD;
+            case SPIDER:
+                return Material.SPIDER_EYE;
+            case IRON_GOLEM:
+                return Material.IRON_BLOCK;
+            case WITHER:
+                return Material.WITHER_SKELETON_SKULL;
+            case ENDER_DRAGON:
+                return Material.DRAGON_HEAD;
+            default:
+                return Material.SPAWNER;
         }
     }
 
     /**
-     * Save a boss configuration to file
+     * Save a boss to a YAML file
      */
-    public static boolean saveBoss(CustomBossCreatorGUI.CustomBossBuilder builder, String originalName) {
-        try {
-            reloadBossConfig();
+    public static boolean saveBoss(CustomBossCreatorGUI.CustomBossBuilder builder, String existingFileName) {
+        String fileName;
 
-            // Use original name if editing, otherwise use current name
-            String bossKey = (originalName != null) ? sanitizeKey(originalName) : sanitizeKey(builder.getBossName());
-            String path = "bosses." + bossKey;
+        if (existingFileName != null) {
+            // Editing existing boss - use its current file name
+            fileName = sanitizeFileName(existingFileName);
+        } else {
+            // New boss - use its name
+            fileName = sanitizeFileName(builder.getBossName());
+        }
+
+        File bossFile = new File(customBossesFolder, fileName + ".yml");
+
+        try {
+            FileConfiguration bossConfig = new YamlConfiguration();
 
             // Save basic properties
-            bossesConfig.set(path + ".name", builder.getBossName());
-            bossesConfig.set(path + ".type", builder.getEntityType().name());
-            bossesConfig.set(path + ".size", builder.getSize());
-            bossesConfig.set(path + ".aggressionType", builder.getAggressionType().name());
-            bossesConfig.set(path + ".health", builder.getHealth());
+            bossConfig.set("name", builder.getBossName());
+            bossConfig.set("type", builder.getEntityType().name());
+            bossConfig.set("size", builder.getSize());
+            bossConfig.set("aggressionType", builder.getAggressionType().name());
+            bossConfig.set("health", builder.getHealth());
 
             // Save particle effect
             if (builder.getParticleEffect() != null) {
-                bossesConfig.set(path + ".particle", builder.getParticleEffect().name());
+                bossConfig.set("particle", builder.getParticleEffect().name());
             }
 
-            bossesConfig.set(path + ".customModelData", builder.getCustomModelData());
+            bossConfig.set("customModelData", builder.getCustomModelData());
 
             // Save equipment
             if (builder.getHelmet() != null) {
-                bossesConfig.set(path + ".equipment.helmet", builder.getHelmet());
+                bossConfig.set("equipment.helmet", builder.getHelmet());
             }
             if (builder.getChestplate() != null) {
-                bossesConfig.set(path + ".equipment.chestplate", builder.getChestplate());
+                bossConfig.set("equipment.chestplate", builder.getChestplate());
             }
             if (builder.getLeggings() != null) {
-                bossesConfig.set(path + ".equipment.leggings", builder.getLeggings());
+                bossConfig.set("equipment.leggings", builder.getLeggings());
             }
             if (builder.getBoots() != null) {
-                bossesConfig.set(path + ".equipment.boots", builder.getBoots());
+                bossConfig.set("equipment.boots", builder.getBoots());
             }
             if (builder.getMainHand() != null) {
-                bossesConfig.set(path + ".equipment.mainhand", builder.getMainHand());
+                bossConfig.set("equipment.mainhand", builder.getMainHand());
             }
             if (builder.getOffHand() != null) {
-                bossesConfig.set(path + ".equipment.offhand", builder.getOffHand());
+                bossConfig.set("equipment.offhand", builder.getOffHand());
             }
 
             // Save special attacks
-            bossesConfig.set(path + ".specialAttacks", builder.getSpecialAttacks());
+            bossConfig.set("specialAttacks", builder.getSpecialAttacks());
 
             // Save natural spawning settings
-            bossesConfig.set(path + ".naturalSpawning", builder.isNaturalSpawning());
-            bossesConfig.set(path + ".spawnRarity", builder.getSpawnRarity());
-            bossesConfig.set(path + ".spawnWorlds", builder.getSpawnWorlds());
+            bossConfig.set("naturalSpawning", builder.isNaturalSpawning());
+            bossConfig.set("spawnRarity", builder.getSpawnRarity());
+            bossConfig.set("spawnWorlds", builder.getSpawnWorlds());
 
-            bossesConfig.save(bossesFile);
+            bossConfig.save(bossFile);
             return true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -280,74 +297,73 @@ public class CustomBossManagerGUI {
     }
 
     /**
-     * Load a boss configuration from file
+     * Load a boss configuration from its YAML file
      */
     public static CustomBossCreatorGUI.CustomBossBuilder loadBoss(String bossName) {
-        reloadBossConfig();
+        String fileName = sanitizeFileName(bossName);
+        File bossFile = new File(customBossesFolder, fileName + ".yml");
 
-        String bossKey = sanitizeKey(bossName);
-        String path = "bosses." + bossKey;
-
-        if (!bossesConfig.contains(path)) {
+        if (!bossFile.exists()) {
             return null;
         }
 
+        FileConfiguration bossConfig = YamlConfiguration.loadConfiguration(bossFile);
         CustomBossCreatorGUI.CustomBossBuilder builder = new CustomBossCreatorGUI.CustomBossBuilder();
 
         // Load basic properties
-        builder.setBossName(bossesConfig.getString(path + ".name", "Unknown"));
-        builder.setEntityType(EntityType.valueOf(bossesConfig.getString(path + ".type", "ZOMBIE")));
-        builder.setSize(bossesConfig.getInt(path + ".size", 1));
+        builder.setBossName(bossConfig.getString("name", "Unknown"));
+        builder.setEntityType(EntityType.valueOf(bossConfig.getString("type", "ZOMBIE")));
+        builder.setSize(bossConfig.getInt("size", 1));
 
         // Load aggression type with backward compatibility
-        if (bossesConfig.contains(path + ".aggressionType")) {
-            builder.setAggressionType(AggressionType.valueOf(bossesConfig.getString(path + ".aggressionType", "AGGRESSIVE")));
+        if (bossConfig.contains("aggressionType")) {
+            builder.setAggressionType(AggressionType.valueOf(bossConfig.getString("aggressionType", "AGGRESSIVE")));
         } else {
-            // Backward compatibility: convert old boolean to new system
-            boolean oldAggressive = bossesConfig.getBoolean(path + ".aggressive", true);
+            // Backward compatibility
+            boolean oldAggressive = bossConfig.getBoolean("aggressive", true);
             builder.setAggressionType(oldAggressive ? AggressionType.AGGRESSIVE : AggressionType.PASSIVE);
         }
 
-        builder.setHealth(bossesConfig.getDouble(path + ".health", 100.0));
+        builder.setHealth(bossConfig.getDouble("health", 100.0));
 
         // Load particle effect
-        if (bossesConfig.contains(path + ".particle")) {
-            builder.setParticleEffect(Particle.valueOf(bossesConfig.getString(path + ".particle")));
+        if (bossConfig.contains("particle")) {
+            builder.setParticleEffect(Particle.valueOf(bossConfig.getString("particle")));
         }
 
-        builder.setCustomModelData(bossesConfig.getInt(path + ".customModelData", 0));
+        builder.setCustomModelData(bossConfig.getInt("customModelData", 0));
 
         // Load equipment
-        if (bossesConfig.contains(path + ".equipment.helmet")) {
-            builder.setHelmet(bossesConfig.getItemStack(path + ".equipment.helmet"));
+        if (bossConfig.contains("equipment.helmet")) {
+            builder.setHelmet(bossConfig.getItemStack("equipment.helmet"));
         }
-        if (bossesConfig.contains(path + ".equipment.chestplate")) {
-            builder.setChestplate(bossesConfig.getItemStack(path + ".equipment.chestplate"));
+        if (bossConfig.contains("equipment.chestplate")) {
+            builder.setChestplate(bossConfig.getItemStack("equipment.chestplate"));
         }
-        if (bossesConfig.contains(path + ".equipment.leggings")) {
-            builder.setLeggings(bossesConfig.getItemStack(path + ".equipment.leggings"));
+        if (bossConfig.contains("equipment.leggings")) {
+            builder.setLeggings(bossConfig.getItemStack("equipment.leggings"));
         }
-        if (bossesConfig.contains(path + ".equipment.boots")) {
-            builder.setBoots(bossesConfig.getItemStack(path + ".equipment.boots"));
+        if (bossConfig.contains("equipment.boots")) {
+            builder.setBoots(bossConfig.getItemStack("equipment.boots"));
         }
-        if (bossesConfig.contains(path + ".equipment.mainhand")) {
-            builder.setMainHand(bossesConfig.getItemStack(path + ".equipment.mainhand"));
+        if (bossConfig.contains("equipment.mainhand")) {
+            builder.setMainHand(bossConfig.getItemStack("equipment.mainhand"));
         }
-        if (bossesConfig.contains(path + ".equipment.offhand")) {
-            builder.setOffHand(bossesConfig.getItemStack(path + ".equipment.offhand"));
+        if (bossConfig.contains("equipment.offhand")) {
+            builder.setOffHand(bossConfig.getItemStack("equipment.offhand"));
         }
 
         // Load special attacks
-        List<String> attacks = bossesConfig.getStringList(path + ".specialAttacks");
+        List<String> attacks = bossConfig.getStringList("specialAttacks");
         for (String attack : attacks) {
             builder.addSpecialAttack(attack);
         }
 
         // Load natural spawning settings
-        builder.setNaturalSpawning(bossesConfig.getBoolean(path + ".naturalSpawning", false));
-        builder.setSpawnRarity(bossesConfig.getInt(path + ".spawnRarity", 1000));
+        builder.setNaturalSpawning(bossConfig.getBoolean("naturalSpawning", false));
+        builder.setSpawnRarity(bossConfig.getInt("spawnRarity", 1000));
 
-        List<String> worlds = bossesConfig.getStringList(path + ".spawnWorlds");
+        List<String> worlds = bossConfig.getStringList("spawnWorlds");
         for (String world : worlds) {
             builder.addSpawnWorld(world);
         }
@@ -356,30 +372,21 @@ public class CustomBossManagerGUI {
     }
 
     /**
-     * Delete a boss from the configuration
+     * Delete a boss YAML file
      */
     public static boolean deleteBoss(String bossName) {
-        try {
-            reloadBossConfig();
+        String fileName = sanitizeFileName(bossName);
+        File bossFile = new File(customBossesFolder, fileName + ".yml");
 
-            String bossKey = sanitizeKey(bossName);
-            String path = "bosses." + bossKey;
-
-            if (!bossesConfig.contains(path)) {
-                return false;
-            }
-
-            bossesConfig.set(path, null);
-            bossesConfig.save(bossesFile);
-            return true;
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (!bossFile.exists()) {
             return false;
         }
+
+        return bossFile.delete();
     }
 
     /**
-     * Spawn a custom boss at a location
+     * Spawn a custom boss at a location with special attacks
      */
     public static void spawnCustomBoss(CustomBossCreatorGUI.CustomBossBuilder builder, Location location, Main main) {
         World world = location.getWorld();
@@ -407,9 +414,22 @@ public class CustomBossManagerGUI {
             }
         }
 
-        // Set scale (minecraft:generic.scale) for the boss
+        // Set scale for the boss (1–10 from creator)
+        int rawSize = builder.getSize();
+
+        // Hard clamp between 1–10 just in case
+        int size = Math.max(1, Math.min(10, rawSize));
+
+        // Try attribute-based scaling first (1–10 → direct scale)
         if (entity.getAttribute(Attribute.SCALE) != null) {
-            entity.getAttribute(Attribute.SCALE).setBaseValue(builder.getSize());
+            entity.getAttribute(Attribute.SCALE).setBaseValue(size);
+        }
+
+        // Special handling for Slimes & Magma Cubes so they actually grow/shrink
+        if (entity instanceof org.bukkit.entity.Slime) {
+            ((org.bukkit.entity.Slime) entity).setSize(size);
+        } else if (entity instanceof org.bukkit.entity.MagmaCube) {
+            ((org.bukkit.entity.MagmaCube) entity).setSize(size);
         }
 
         // Set equipment
@@ -434,29 +454,52 @@ public class CustomBossManagerGUI {
         // Start particle effect task if set
         if (builder.getParticleEffect() != null) {
             final Particle particle = builder.getParticleEffect();
-            Bukkit.getScheduler().runTaskTimer(main, () -> {
-                if (entity.isDead()) return;
-                world.spawnParticle(particle, entity.getLocation().add(0, 1, 0), 5, 0.5, 0.5, 0.5, 0);
-            }, 0L, 10L);
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    if (entity.isDead()) {
+                        cancel();
+                        return;
+                    }
+                    world.spawnParticle(particle, entity.getLocation().add(0, 1, 0), 5, 0.5, 0.5, 0.5, 0);
+                }
+            }.runTaskTimer(main, 0L, 10L);
         }
 
-        // TODO: Implement special attacks AI
-        // TODO: Implement minion spawning
+        // Register boss with AI controller for special attacks
+        // FIXED: Use the main instance's AI controller
+        if (!builder.getSpecialAttacks().isEmpty()) {
+            main.getConsole().sendMessage(main.getPluginPrefix() + ChatColor.GREEN +
+                    "Registering boss with " + builder.getSpecialAttacks().size() + " attacks");
+
+            // Log what attacks are being registered
+            for (String attack : builder.getSpecialAttacks()) {
+                main.getConsole().sendMessage(main.getPluginPrefix() + ChatColor.GRAY +
+                        "  - " + attack);
+            }
+
+            main.getBossAIController().registerBoss(entity, builder.getSpecialAttacks());
+        } else {
+            main.getConsole().sendMessage(main.getPluginPrefix() + ChatColor.YELLOW +
+                    "Warning: Boss spawned with no special attacks!");
+        }
+
+        // Clean up AI when boss dies
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (entity.isDead()) {
+                    main.getBossAIController().unregisterBoss(entity.getUniqueId());
+                    cancel();
+                }
+            }
+        }.runTaskTimer(main, 20L, 20L);
     }
 
     /**
-     * Reload the boss configuration from disk
+     * Convert a boss name to a valid file name
      */
-    private static void reloadBossConfig() {
-        if (bossesFile != null && bossesConfig != null) {
-            bossesConfig = YamlConfiguration.loadConfiguration(bossesFile);
-        }
-    }
-
-    /**
-     * Convert a boss name to a valid configuration key
-     */
-    private static String sanitizeKey(String name) {
-        return ChatColor.stripColor(name).toLowerCase().replaceAll("[^a-z0-9_]", "_");
+    private static String sanitizeFileName(String name) {
+        return ChatColor.stripColor(name).replaceAll("[^a-zA-Z0-9_-]", "_");
     }
 }

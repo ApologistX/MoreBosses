@@ -18,6 +18,8 @@ public class Main extends JavaPlugin {
     // Server console attribute
     private ConsoleCommandSender console = getServer().getConsoleSender();
     private String pluginPrefix = ChatColor.translateAlternateColorCodes('&', "&f[&6MoreBosses&f] - ");
+    private BossAIController bossAIController;
+    private CustomAttackManager customAttackManager; // ADD THIS LINE
 
     // Get server console in a safe way,
     public ConsoleCommandSender getConsole() {
@@ -27,6 +29,16 @@ public class Main extends JavaPlugin {
     public String getPluginPrefix() {
         return this.pluginPrefix;
     }
+
+    public BossAIController getBossAIController() {
+        return this.bossAIController;
+    }
+
+    // ADD THIS GETTER
+    public CustomAttackManager getCustomAttackManager() {
+        return this.customAttackManager;
+    }
+
 
     //Code to run when the server is enabled
     @Override
@@ -79,7 +91,7 @@ public class Main extends JavaPlugin {
         config.addDefault("DrStrangeHealth",  300);
         config.addDefault("SpawnFrequency", 3);
         config.addDefault("SpawnInWorld", false);
-        config.addDefault("GenerateStructures", true); // <-- Added new default
+        config.addDefault("GenerateStructures", true);
         config.addDefault("AnnounceBossKill", true);
 
         config.addDefault("OswaldoSpawn", true);
@@ -109,7 +121,13 @@ public class Main extends JavaPlugin {
         this.getCommand("albertremover").setExecutor(new AlbertRemoverItem(this));
         this.getCommand("spawnboss").setExecutor(new SpawnBossCommand(this));
 
-        // Use the single instance for the command executor
+        this.bossAIController = new BossAIController(this);
+        console.sendMessage(getPluginPrefix() + ChatColor.GREEN + "Boss AI Controller initialized!");
+
+        // ADD THESE TWO LINES
+        this.customAttackManager = new CustomAttackManager(this);
+        console.sendMessage(getPluginPrefix() + ChatColor.GREEN + "Custom Attack Manager initialized!");
+
         this.getCommand("removebars").setExecutor(bossBarHandler);
 
         this.getCommand("despawnentities").setExecutor(new DespawnCommand(this));

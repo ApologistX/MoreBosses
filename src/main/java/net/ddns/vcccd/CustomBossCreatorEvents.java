@@ -370,7 +370,8 @@ public class CustomBossCreatorEvents implements Listener {
             return;
         }
 
-        // Find the attack ID from the registry
+        // First check preset attacks
+        boolean foundAttack = false;
         for (Map.Entry<String, BossSpecialAttacks.SpecialAttack> entry : BossSpecialAttacks.getAllAttacks().entrySet()) {
             if (entry.getValue().getDisplayName().equals(itemName)) {
                 String attackId = entry.getKey();
@@ -383,7 +384,27 @@ public class CustomBossCreatorEvents implements Listener {
                     builder.addSpecialAttack(attackId);
                     player.sendMessage(main.getPluginPrefix() + ChatColor.GREEN + "Added attack: " + ChatColor.stripColor(itemName));
                 }
+                foundAttack = true;
                 break;
+            }
+        }
+
+        // If not found in preset attacks, check custom attacks
+        if (!foundAttack) {
+            for (Map.Entry<String, CustomAttackManager.CustomAttack> entry : CustomAttackManager.getCustomAttacks().entrySet()) {
+                if (entry.getValue().getDisplayName().equals(itemName)) {
+                    String attackId = entry.getKey();
+
+                    // Toggle attack (add if not present, remove if present)
+                    if (builder.getSpecialAttacks().contains(attackId)) {
+                        builder.removeSpecialAttack(attackId);
+                        player.sendMessage(main.getPluginPrefix() + ChatColor.YELLOW + "Removed custom attack: " + ChatColor.stripColor(itemName));
+                    } else {
+                        builder.addSpecialAttack(attackId);
+                        player.sendMessage(main.getPluginPrefix() + ChatColor.GREEN + "Added custom attack: " + ChatColor.stripColor(itemName));
+                    }
+                    break;
+                }
             }
         }
 
