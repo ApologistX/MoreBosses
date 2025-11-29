@@ -6,6 +6,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
+import java.util.Map;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -91,6 +92,33 @@ public class CustomAttackExecutor {
         // Apply self buffs
         if (effects.applyToSelf && !effects.potionEffects.isEmpty()) {
             applyPotionEffects(boss, effects.potionEffects);
+        }
+
+        // Execute mechanics if defined (NEW)
+        if (attack.hasMechanics()) {
+            executeMechanics(boss, target, attack);
+        }
+    }
+
+    /**
+     * Execute all mechanics for this attack (NEW)
+     */
+    private void executeMechanics(LivingEntity boss, Player target, CustomAttackManager.CustomAttack attack) {
+        MechanicManager mechanicManager = main.getMechanicManager();
+        if (mechanicManager == null) {
+            main.getConsole().sendMessage(main.getPluginPrefix() +
+                    ChatColor.RED + "MechanicManager not initialized!");
+            return;
+        }
+
+        for (Map<String, Object> mechanic : attack.getMechanics()) {
+            String mechanicId = (String) mechanic.get("id");
+            @SuppressWarnings("unchecked")
+            Map<String, Object> parameters = (Map<String, Object>) mechanic.get("parameters");
+
+            if (mechanicId != null) {
+                mechanicManager.executeMechanic(mechanicId, boss, target, parameters);
+            }
         }
     }
 

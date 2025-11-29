@@ -281,8 +281,23 @@ public class CustomAttackManager {
             }
         }
 
+        // Load mechanics list (NEW)
+        List<Map<String, Object>> mechanics = new ArrayList<>();
+        if (section.contains("mechanics")) {
+            List<?> mechanicsList = section.getList("mechanics");
+            if (mechanicsList != null) {
+                for (Object mechObj : mechanicsList) {
+                    if (mechObj instanceof Map) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> mechanicMap = (Map<String, Object>) mechObj;
+                        mechanics.add(mechanicMap);
+                    }
+                }
+            }
+        }
+
         return new CustomAttack(id, displayName, description, category, icon,
-                damage, range, effects, fileName);
+                damage, range, effects, fileName, mechanics); // Pass mechanics
     }
 
     /**
@@ -401,10 +416,12 @@ public class CustomAttackManager {
         private final double range;
         private final AttackEffects effects;
         private final String fileName;
+        private final List<Map<String, Object>> mechanics; // NEW: Mechanics list
 
         public CustomAttack(String id, String displayName, String description,
                             BossSpecialAttacks.AttackCategory category, Material icon,
-                            double damage, double range, AttackEffects effects, String fileName) {
+                            double damage, double range, AttackEffects effects, String fileName,
+                            List<Map<String, Object>> mechanics) { // NEW: Add mechanics parameter
             this.id = id;
             this.displayName = displayName;
             this.description = description;
@@ -414,6 +431,7 @@ public class CustomAttackManager {
             this.range = range;
             this.effects = effects;
             this.fileName = fileName;
+            this.mechanics = mechanics != null ? mechanics : new ArrayList<>(); // NEW: Initialize mechanics
         }
 
         // Getters
@@ -426,5 +444,7 @@ public class CustomAttackManager {
         public double getRange() { return range; }
         public AttackEffects getEffects() { return effects; }
         public String getFileName() { return fileName; }
+        public List<Map<String, Object>> getMechanics() { return mechanics; } // NEW: Getter
+        public boolean hasMechanics() { return mechanics != null && !mechanics.isEmpty(); } // NEW: Helper
     }
 }

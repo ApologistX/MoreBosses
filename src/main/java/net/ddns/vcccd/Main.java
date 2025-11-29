@@ -19,7 +19,8 @@ public class Main extends JavaPlugin {
     private ConsoleCommandSender console = getServer().getConsoleSender();
     private String pluginPrefix = ChatColor.translateAlternateColorCodes('&', "&f[&6MoreBosses&f] - ");
     private BossAIController bossAIController;
-    private CustomAttackManager customAttackManager; // ADD THIS LINE
+    private CustomAttackManager customAttackManager;
+    private MechanicManager mechanicManager; // NEW: Mechanics system
 
     // Get server console in a safe way,
     public ConsoleCommandSender getConsole() {
@@ -34,9 +35,13 @@ public class Main extends JavaPlugin {
         return this.bossAIController;
     }
 
-    // ADD THIS GETTER
     public CustomAttackManager getCustomAttackManager() {
         return this.customAttackManager;
+    }
+
+    // NEW: MechanicManager getter
+    public MechanicManager getMechanicManager() {
+        return this.mechanicManager;
     }
 
 
@@ -124,9 +129,12 @@ public class Main extends JavaPlugin {
         this.bossAIController = new BossAIController(this);
         console.sendMessage(getPluginPrefix() + ChatColor.GREEN + "Boss AI Controller initialized!");
 
-        // ADD THESE TWO LINES
         this.customAttackManager = new CustomAttackManager(this);
         console.sendMessage(getPluginPrefix() + ChatColor.GREEN + "Custom Attack Manager initialized!");
+
+        // NEW: Initialize MechanicManager
+        this.mechanicManager = new MechanicManager(this);
+        console.sendMessage(getPluginPrefix() + ChatColor.GREEN + "Mechanics System initialized!");
 
         this.getCommand("removebars").setExecutor(bossBarHandler);
 
