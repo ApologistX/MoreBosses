@@ -11,6 +11,8 @@ Still need to test all angles of custom items. This fork is going in the directi
 - [✕] Implement Spell Effects
 - [75% Done] Implement Special Attacks
 - [✕] Implement Structures
+    - Current Structures need logic change (maybe by logging all beds (or doors)) and not spawning near them;
+    - Set a timer before a structure is allowed to spawn from server start (If you continuously restart, structures will be spammed around your spawn.) 
 - [✕] Update legacy strings for bosses / boss handling
 - [✕] Create new schematics for custom bosses
 - [✕] Create an assortment of attack types for bosses
