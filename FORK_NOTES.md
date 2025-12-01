@@ -9,7 +9,7 @@ Still need to test all angles of custom items. This fork is going in the directi
 
 ###  Core Systems
 - [✕] Implement Spell Effects
-- [75% Done] Implement Special Attacks
+- [35% Done] Implement Special Attacks
 - [✕] Implement Structures
     - Current Structures need logic change (maybe by logging all beds (or doors)) and not spawning near them;
     - Set a timer before a structure is allowed to spawn from server start (If you continuously restart, structures will be spammed around your spawn.) 
