@@ -52,7 +52,6 @@ public class CustomBossManagerGUI {
         File[] bossFiles = customBossesFolder.listFiles((dir, name) -> name.endsWith(".yml"));
         int bossCount = (bossFiles != null) ? bossFiles.length : 0;
 
-        // Calculate inventory size (minimum 27, maximum 54)
         int invSize = Math.min(54, Math.max(27, ((bossCount / 9) + 1) * 9));
 
         Inventory managerMenu = Bukkit.createInventory(null, invSize, "Manage Custom Bosses");
@@ -502,4 +501,5 @@ public class CustomBossManagerGUI {
     private static String sanitizeFileName(String name) {
         return ChatColor.stripColor(name).replaceAll("[^a-zA-Z0-9_-]", "_");
     }
+
 }
