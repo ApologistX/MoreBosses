@@ -8,6 +8,7 @@ Still need to test all angles of custom items. This fork is going in the directi
   - Sometimes drops as a **damaged** item
 
 ###  Core Systems
+- [✕] Add more mob selection to Creator GUI
 - [✕] Implement Spell Effects
 - [35% Done] Implement Special Attacks
 - [✕] Implement Structures
