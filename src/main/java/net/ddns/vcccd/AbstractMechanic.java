@@ -30,14 +30,11 @@ public abstract class AbstractMechanic implements Mechanic {
 
     @Override
     public boolean validateParameters(Map<String, Object> parameters) {
-        // Default implementation: always valid
-        // Override in subclasses for specific validation
         return true;
     }
 
     @Override
     public Map<String, Object> getDefaultParameters() {
-        // Override in subclasses to provide defaults
         return new HashMap<>();
     }
 
@@ -98,4 +95,5 @@ public abstract class AbstractMechanic implements Mechanic {
         Object value = params.get(key);
         return value != null ? value.toString() : defaultValue;
     }
+
 }
